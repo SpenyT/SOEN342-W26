@@ -1,0 +1,18 @@
+TaskName,Description,Subtask,Status,Priority,DueDate,ProjectName,ProjectDescription,Collaborator,CollaboratorCategory
+Fix login bug,Users cannot log in with special characters in password,Write unit tests,OPEN,HIGH,2026-04-10,Backend,Core backend services,Alice,SENIOR
+Fix login bug,Users cannot log in with special characters in password,Code review,OPEN,HIGH,2026-04-10,Backend,Core backend services,Bob,JUNIOR
+Fix login bug,Users cannot log in with special characters in password,Deploy hotfix,OPEN,HIGH,2026-04-10,Backend,Core backend services,Carol,INTERMEDIATE
+Design homepage,Create new homepage mockups based on brand guidelines,Wireframes,OPEN,MEDIUM,2026-04-20,Frontend,UI and design work,Dave,JUNIOR
+Design homepage,Create new homepage mockups based on brand guidelines,Client review,OPEN,MEDIUM,2026-04-20,Frontend,UI and design work,,
+Set up CI pipeline,Automate build and test on every pull request,,OPEN,CRITICAL,2026-04-05,DevOps,Infrastructure and deployment,,
+Write API docs,Document all REST endpoints for the public API,Draft endpoints,COMPLETED,LOW,2026-03-30,Backend,Core backend services,Alice,SENIOR
+Write API docs,Document all REST endpoints for the public API,Peer review,COMPLETED,LOW,2026-03-30,Backend,Core backend services,Bob,JUNIOR
+Database migration,Migrate user table to new schema,Write migration script,OPEN,HIGH,2026-04-15,Backend,Core backend services,Carol,INTERMEDIATE
+Database migration,Migrate user table to new schema,Test on staging,OPEN,HIGH,2026-04-15,Backend,Core backend services,Dave,JUNIOR
+Update privacy policy,Revise policy to meet new regulations,,CANCELLED,DEFAULT,2026-04-01,Legal,Legal and compliance,,
+Optimize search query,Search results taking over 3 seconds on large datasets,Profile slow queries,OPEN,MEDIUM,2026-04-18,Backend,Core backend services,Alice,SENIOR
+Optimize search query,Search results taking over 3 seconds on large datasets,Add indexes,OPEN,MEDIUM,2026-04-18,Backend,Core backend services,Carol,INTERMEDIATE
+Mobile nav menu,Implement collapsible nav for mobile screens,HTML structure,OPEN,MEDIUM,2026-04-22,Frontend,UI and design work,Bob,JUNIOR
+Mobile nav menu,Implement collapsible nav for mobile screens,CSS animations,OPEN,MEDIUM,2026-04-22,Frontend,UI and design work,Dave,JUNIOR
+Mobile nav menu,Implement collapsible nav for mobile screens,Cross-browser test,OPEN,MEDIUM,2026-04-22,Frontend,UI and design work,,
+Setup monitoring,Add uptime and error-rate alerts,Configure alerts,OPEN,HIGH,2026-04-08,DevOps,Infrastructure and deployment,Carol,INTERMEDIATE
