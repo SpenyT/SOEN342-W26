@@ -13,7 +13,7 @@ A Java console application for managing tasks, subtasks, projects, and collabora
 
 ## Build & Run
 
-All commands are run from the **root of the project** (the `Iteration_2/` folder, one level above `src/`).
+All commands are run from the **root of the project** (the `Iteration 2/` folder, one level above `src/`).
 
 ### 1. Compile
 
@@ -161,7 +161,7 @@ Filters the loaded tasks using one or more criteria. All criteria are optional �
 
 **Filter behaviour:**
 - **Task name contains** — case-sensitive substring match on the task title.
-- **Status** — must be exactly `OPEN`, `COMPLETED`, or `CANCELLED`.
+- **Status** — must be exactly `OPEN`, `COMPLETED`, or `CANCELLED`. Leave blank to select any.
 - **Period start / Period end** — filters tasks whose due date falls within the range (inclusive). Either bound can be omitted.
 - **Day of week** — filters tasks whose due date falls on that weekday (e.g. `MONDAY`).
 - Multiple criteria are combined with AND logic (all specified criteria must match).
