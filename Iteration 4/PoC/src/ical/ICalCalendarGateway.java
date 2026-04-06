@@ -4,7 +4,6 @@ import net.fortuna.ical4j.data.CalendarOutputter;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.Description;
-import net.fortuna.ical4j.model.property.DtStamp;
 import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.Uid;
 import net.fortuna.ical4j.model.property.immutable.ImmutableCalScale;
@@ -14,7 +13,6 @@ import task.Task;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
 
 
@@ -28,16 +26,15 @@ public class ICalCalendarGateway implements CalendarExportGateway {
     @Override
     public void exportTasks(List<Task> tasks, String filePath) throws IOException {
         Calendar calendar = new Calendar();
-        calendar.getProperties().add(new ProdId("-//SOEN342 Task Scheduler//EN"));
-        calendar.getProperties().add(ImmutableVersion.VERSION_2_0);
-        calendar.getProperties().add(ImmutableCalScale.GREGORIAN);
+        calendar.add(new ProdId("-//SOEN342 Task Scheduler//EN"));
+        calendar.add(ImmutableVersion.VERSION_2_0);
+        calendar.add(ImmutableCalScale.GREGORIAN);
 
         for (Task task : tasks) {
             if (task.getDueDate() == null) continue;
 
             VEvent event = new VEvent(task.getDueDate(), task.getTitle());
-            event.getProperties().add(new Uid(task.getTitle() + "_" + task.getDueDate()));
-            event.getProperties().add(new DtStamp(Instant.now()));
+            event.add(new Uid(task.getTitle() + "_" + task.getDueDate()));
 
             StringBuilder desc = new StringBuilder();
             if (task.getDescription() != null && !task.getDescription().isEmpty()) {
@@ -55,8 +52,8 @@ public class ICalCalendarGateway implements CalendarExportGateway {
                     desc.append("\n  - ").append(st.getTitle()).append(" [").append(st.getStatus()).append("]");
                 }
             }
-            event.getProperties().add(new Description(desc.toString()));
-            calendar.getComponents().add(event);
+            event.add(new Description(desc.toString()));
+            calendar.add(event);
         }
 
         String path = filePath.endsWith(".ics") ? filePath : filePath + ".ics";
