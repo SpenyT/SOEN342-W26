@@ -357,7 +357,6 @@ public class TaskService {
                 .findFirst().orElse(null);
     }
 
-
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasks);
     }

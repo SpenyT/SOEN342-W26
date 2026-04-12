@@ -19,6 +19,7 @@ import project.Project;
 import project.Projects;
 import tag.Tag;
 import task.PriorityLevel;
+import task.RecurrencePattern;
 import task.Status;
 import task.SubTask;
 import task.Task;
@@ -226,10 +227,23 @@ public class ApplicationControler {
         }
     }
 
-    public void updateTask(String taskTitle, String newTitle, String newDescription, String newStatusStr, String newPriorityStr, String newDueDateStr, String newProjectName, String newTagsStr) {
-        Task task = taskService.findTaskByName(taskTitle);
+    public void updateTask(String taskTitle, String dueDateStr, String newTitle, String newDescription, String newStatusStr, String newPriorityStr, String newDueDateStr, String newProjectName, String newTagsStr, RecurrencePattern recurrencePattern) {
+        Task task;
+        
+        // If due date is provided, search by name and date; otherwise search by name only
+        if (dueDateStr != null && !dueDateStr.trim().isEmpty()) {
+            try {
+                LocalDate dueDate = LocalDate.parse(dueDateStr.trim());
+                task = taskService.findTaskByNameAndDate(taskTitle, dueDate);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid due date format: " + dueDateStr);
+            }
+        } else {
+            task = taskService.findTaskByName(taskTitle);
+        }
+        
         if (task == null) {
-            throw new IllegalArgumentException("Task not found: " + taskTitle);
+            throw new IllegalArgumentException("Task not found: " + taskTitle + (dueDateStr != null && !dueDateStr.trim().isEmpty() ? " on " + dueDateStr : ""));
         }
 
         String oldTitle = task.getTitle();
@@ -309,6 +323,11 @@ public class ApplicationControler {
             changes.append("Tags updated. ");
         }
 
+        if (recurrencePattern != null) {
+            task.setRecurrencePattern(recurrencePattern);
+            changes.append("Recurrence details updated. ");
+        }
+
         if (titleChanged) {
             task.setTitle(newTitle.trim());
         }
@@ -334,6 +353,32 @@ public class ApplicationControler {
         } else {
             throw new IllegalArgumentException("No valid updates provided.");
         }
+    }
+
+    public void createTask(String title, LocalDate dueDate, String description, String projectName, PriorityLevel priority) {
+        if (dueDate == null) {
+            throw new IllegalArgumentException("Due date is required.");
+        }
+        Project project = projects.findOrCreateProject(projectName, "");
+        Task task = taskService.createTask(title, dueDate, description, project);
+        task.setPriorityLevel(priority);
+        taskService.saveTask(task);
+        historyService.record(task, "Task created.");
+    }
+
+    public void createTask(String title, LocalDate dueDate, String description, String projectName, PriorityLevel priority, RecurrencePattern recurrencePattern) {
+        if (dueDate == null) {
+            throw new IllegalArgumentException("Due date is required.");
+        }
+        if (recurrencePattern == null) {
+            throw new IllegalArgumentException("Recurrence pattern is required for this method.");
+        }
+        Project project = projects.findOrCreateProject(projectName, "");
+        Task task = taskService.createTask(title, dueDate, description, project);
+        task.setPriorityLevel(priority);
+        task.setRecurrencePattern(recurrencePattern);
+        taskService.saveTask(task);
+        historyService.record(task, "Task created with recurrence pattern (" + recurrencePattern.getType() + ", interval: " + recurrencePattern.getInterval() + ").");
     }
 
     public int getTaskCount() {
