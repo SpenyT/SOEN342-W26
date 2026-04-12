@@ -1,8 +1,12 @@
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 
 import collaborator.Collaborator;
 import history.HistoryLog;
+import task.PriorityLevel;
+import task.RecurrencePattern;
+import task.RecurrenceType;
 import task.SubTask;
 import task.Task;
 
@@ -22,16 +26,17 @@ public class Console {
             switch (choice) {
                 case "1": importCsv();               break;
                 case "2": exportCsv();               break;
-                case "3": search();                  break;
-                case "4": viewHistory();             break;
-                case "5": exportToCalendar();        break;
-                case "6": listOverloadedCollaborators(); break;
-                case "7": updateTask();              break;
-                case "8":
+                case "3": createTask();              break;
+                case "4": updateTask();              break;
+                case "5": search();                  break;
+                case "6": viewHistory();             break;
+                case "7": exportToCalendar();        break;
+                case "8": listOverloadedCollaborators(); break;
+                case "9":
                     System.out.println("Goodbye!");
                     return;
                 default:
-                    System.out.println("Invalid choice. Please enter 1-8.");
+                    System.out.println("Invalid choice. Please enter 1-9.");
             }
         }
     }
@@ -43,12 +48,13 @@ public class Console {
         System.out.println("||========================================||");
         System.out.println("|| 1. Import Tasks from CSV               ||");
         System.out.println("|| 2. Export Tasks to CSV                 ||");
-        System.out.println("|| 3. Search Tasks                        ||");
-        System.out.println("|| 4. View Task History                   ||");
-        System.out.println("|| 5. Export Tasks to iCalendar (.ics)    ||");
-        System.out.println("|| 6. List Overloaded Collaborators       ||");
-        System.out.println("|| 7. Update Task                         ||");
-        System.out.println("|| 8. Exit                                ||");
+        System.out.println("|| 3. Create Task                         ||");
+        System.out.println("|| 4. Update Task                         ||");
+        System.out.println("|| 5. Search Tasks                        ||");
+        System.out.println("|| 6. View Task History                   ||");
+        System.out.println("|| 7. Export Tasks to iCalendar (.ics)    ||");
+        System.out.println("|| 8. List Overloaded Collaborators       ||");
+        System.out.println("|| 9. Exit                                ||");
         System.out.println("||========================================||");
         System.out.print(  "  Choice: ");
     }
@@ -203,6 +209,9 @@ public class Console {
             return;
         }
 
+        System.out.print("Task due date (yyyy-MM-dd, leave blank if no due date): ");
+        String dueDate = scanner.nextLine().trim();
+
         System.out.println("Leave fields blank to keep current values.");
         System.out.print("New title: ");
         String newTitle = scanner.nextLine().trim();
@@ -218,12 +227,190 @@ public class Console {
         String newProject = scanner.nextLine().trim();
         System.out.print("New tags (comma-separated): ");
         String newTags = scanner.nextLine().trim();
+        System.out.print("Change recurrence details? (y/n): ");
+        String updateRecurrence = scanner.nextLine().trim().toLowerCase();
+        RecurrencePattern recurrencePattern = null;
+
+        if (updateRecurrence.equals("y") || updateRecurrence.equals("yes")) {
+            System.out.println("--- Recurrence Pattern ---");
+            System.out.print("Recurrence type (DAILY/WEEKLY/MONTHLY): ");
+            String typeStr = scanner.nextLine().trim();
+            RecurrenceType recurrenceType = null;
+            try {
+                recurrenceType = RecurrenceType.valueOf(typeStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid recurrence type.");
+                return;
+            }
+
+            System.out.print("Interval (every N days/weeks/months): ");
+            String intervalStr = scanner.nextLine().trim();
+            int interval = 1;
+            try {
+                interval = Integer.parseInt(intervalStr);
+                if (interval < 1) {
+                    System.out.println("Interval must be at least 1.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid interval.");
+                return;
+            }
+
+            System.out.print("Recurrence start date (yyyy-MM-dd): ");
+            String rcStartDateStr = scanner.nextLine().trim();
+            if (rcStartDateStr.isEmpty()) {
+                System.out.println("Recurrence start date is required.");
+                return;
+            }
+            LocalDate recStartDate;
+            try {
+                recStartDate = LocalDate.parse(rcStartDateStr);
+            } catch (Exception e) {
+                System.out.println("Invalid date format.");
+                return;
+            }
+
+            System.out.print("Recurrence end date (yyyy-MM-dd): ");
+            String rcEndDateStr = scanner.nextLine().trim();
+            LocalDate recEndDate;
+            if (rcEndDateStr.isEmpty()) {
+                System.out.println("Recurrence end date is required.");
+                return;
+            }
+            try {
+                recEndDate = LocalDate.parse(rcEndDateStr);
+            } catch (Exception e) {
+                System.out.println("Invalid date format.");
+                return;
+            }
+
+            recurrencePattern = new RecurrencePattern(recurrenceType, interval, recStartDate, recEndDate);
+        }
 
         try {
-            controller.updateTask(taskName, newTitle, description, status, priority, newDueDate, newProject, newTags);
+            controller.updateTask(taskName, dueDate, newTitle, description, status, priority, newDueDate, newProject, newTags, recurrencePattern);
             System.out.println("Task updated successfully.");
         } catch (Exception e) {
             System.out.println("Update failed: " + e.getMessage());
+        }
+    }
+
+    private void createTask() {
+        System.out.println();
+        System.out.println("--- Create New Task ---");
+
+        System.out.print("Task title: ");
+        String title = scanner.nextLine().trim();
+        if (title.isEmpty()) {
+            System.out.println("Title is required.");
+            return;
+        }
+
+        System.out.print("Description (optional): ");
+        String description = scanner.nextLine().trim();
+        if (description.isEmpty()) {
+            description = null;
+        }
+
+        System.out.print("Due date (yyyy-MM-dd): ");
+        String dueDateStr = scanner.nextLine().trim();
+        LocalDate dueDate = null;
+        if (dueDateStr.isEmpty()) {
+            System.out.println("Due date is required.");
+            return;
+        }
+        try {
+            dueDate = LocalDate.parse(dueDateStr);
+        } catch (Exception e) {
+            System.out.println("Invalid date format.");
+            return;
+        }
+
+        System.out.print("Priority level (DEFAULT/LOW/MEDIUM/HIGH/CRITICAL, default DEFAULT): ");
+        String priorityStr = scanner.nextLine().trim();
+        PriorityLevel priority = PriorityLevel.DEFAULT;
+        if (!priorityStr.isEmpty()) {
+            try {
+                priority = PriorityLevel.valueOf(priorityStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid priority. Using DEFAULT.");
+            }
+        }
+
+        System.out.print("Project name (optional, default 'Default'): ");
+        String projectName = scanner.nextLine().trim();
+        if (projectName.isEmpty()) {
+            projectName = "Default";
+        }
+
+        System.out.print("Add recurrence pattern? (y/n): ");
+        String addRecurrence = scanner.nextLine().trim().toLowerCase();
+        RecurrencePattern recurrencePattern = null;
+        
+        if (addRecurrence.equals("y") || addRecurrence.equals("yes")) {
+            System.out.println("--- Recurrence Pattern ---");
+            
+            System.out.print("Recurrence type (DAILY/WEEKLY/MONTHLY): ");
+            String typeStr = scanner.nextLine().trim();
+            RecurrenceType recurrenceType = null;
+            try {
+                recurrenceType = RecurrenceType.valueOf(typeStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid recurrence type.");
+                return;
+            }
+            
+            System.out.print("Interval (every N days/weeks/months): ");
+            String intervalStr = scanner.nextLine().trim();
+            int interval = 1;
+            try {
+                interval = Integer.parseInt(intervalStr);
+                if (interval < 1) {
+                    System.out.println("Interval must be at least 1.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid interval. Using 1.");
+            }
+            
+            System.out.print("Recurrence start date (yyyy-MM-dd, default = task due date): ");
+            String rcStartDateStr = scanner.nextLine().trim();
+            LocalDate recStartDate = dueDate;
+            if (!rcStartDateStr.isEmpty()) {
+                try {
+                    recStartDate = LocalDate.parse(rcStartDateStr);
+                } catch (Exception e) {
+                    System.out.println("Invalid date format. Using task due date.");
+                }
+            }
+            
+            System.out.print("Recurrence end date (yyyy-MM-dd): ");
+            String rcEndDateStr = scanner.nextLine().trim();
+            LocalDate recEndDate = null;
+            if (rcEndDateStr.isEmpty()) {
+                System.out.println("Recurrence end date is required.");
+                return;
+            }
+            try {
+                recEndDate = LocalDate.parse(rcEndDateStr);
+            } catch (Exception e) {
+                System.out.println("Invalid date format.");
+                return;
+            }
+            
+            recurrencePattern = new RecurrencePattern(recurrenceType, interval, recStartDate, recEndDate);
+        }
+
+        try {
+            if (recurrencePattern != null) {
+                controller.createTask(title, dueDate, description, projectName, priority, recurrencePattern);
+            } else {
+                controller.createTask(title, dueDate, description, projectName, priority);
+            }
+            System.out.println("Task created successfully.");
+        } catch (Exception e) {
+            System.out.println("Failed to create task: " + e.getMessage());
         }
     }
 
