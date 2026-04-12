@@ -226,6 +226,116 @@ public class ApplicationControler {
         }
     }
 
+    public void updateTask(String taskTitle, String newTitle, String newDescription, String newStatusStr, String newPriorityStr, String newDueDateStr, String newProjectName, String newTagsStr) {
+        Task task = taskService.findTaskByName(taskTitle);
+        if (task == null) {
+            throw new IllegalArgumentException("Task not found: " + taskTitle);
+        }
+
+        String oldTitle = task.getTitle();
+        LocalDate oldDueDate = task.getDueDate();
+        boolean titleChanged = false;
+        boolean dueDateChanged = false;
+        boolean tagsChanged = newTagsStr != null && !newTagsStr.trim().isEmpty();
+
+        StringBuilder changes = new StringBuilder();
+
+        if (newTitle != null && !newTitle.trim().isEmpty() && !newTitle.trim().equals(oldTitle)) {
+            // Check uniqueness
+            if (taskService.getAllTasks().stream().anyMatch(t -> t.getTitle().equals(newTitle.trim()) && !t.equals(task))) {
+                throw new IllegalArgumentException("Task title already exists: " + newTitle);
+            }
+            titleChanged = true;
+            changes.append("Title changed to '").append(newTitle.trim()).append("'. ");
+        }
+
+        if (newDescription != null && !newDescription.trim().isEmpty()) {
+            task.setDescription(newDescription.trim());
+            changes.append("Description updated. ");
+        }
+
+        if (newStatusStr != null && !newStatusStr.trim().isEmpty()) {
+            try {
+                Status newStatus = Status.valueOf(newStatusStr.toUpperCase().trim());
+                task.setStatus(newStatus);
+                changes.append("Status set to ").append(newStatus).append(". ");
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid status: " + newStatusStr);
+            }
+        }
+
+        if (newPriorityStr != null && !newPriorityStr.trim().isEmpty()) {
+            try {
+                PriorityLevel newPriority = PriorityLevel.valueOf(newPriorityStr.toUpperCase().trim());
+                task.setPriorityLevel(newPriority);
+                changes.append("Priority set to ").append(newPriority).append(". ");
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid priority: " + newPriorityStr);
+            }
+        }
+
+        if (newDueDateStr != null && !newDueDateStr.trim().isEmpty()) {
+            try {
+                LocalDate newDueDate = LocalDate.parse(newDueDateStr.trim());
+                if (!newDueDate.equals(oldDueDate)) {
+                    dueDateChanged = true;
+                    task.setDueDate(newDueDate);
+                    changes.append("Due date set to ").append(newDueDate).append(". ");
+                }
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid due date: " + newDueDateStr);
+            }
+        }
+
+        if (newProjectName != null && !newProjectName.trim().isEmpty()) {
+            Project newProject = projects.findProject(newProjectName.trim());
+            if (newProject == null) {
+                throw new IllegalArgumentException("Project not found: " + newProjectName);
+            }
+            task.setProject(newProject);
+            changes.append("Project changed to '").append(newProject.getName()).append("'. ");
+        }
+
+        if (tagsChanged) {
+            // Clear current tags
+            task.getTags().clear();
+            // Add new tags
+            for (String tagName : newTagsStr.split(",")) {
+                String trimmed = tagName.trim();
+                if (!trimmed.isEmpty()) {
+                    task.addTag(new Tag(trimmed));
+                }
+            }
+            changes.append("Tags updated. ");
+        }
+
+        if (titleChanged) {
+            task.setTitle(newTitle.trim());
+        }
+
+        if (changes.length() > 0) {
+            if (titleChanged || dueDateChanged) {
+                // Delete old database records
+                taskService.deleteTaskWithOldKey(oldTitle, oldDueDate);
+            }
+            if (tagsChanged) {
+                // Delete old tags
+                taskService.deleteTagsForTask(oldTitle, oldDueDate);
+            }
+            taskService.saveTask(task);
+            // Save subtasks and tags with new keys
+            for (SubTask st : task.getSubTasks()) {
+                taskService.saveSubTask(st, task);
+            }
+            for (Tag tag : task.getTags()) {
+                taskService.addTagToTask(task, tag);
+            }
+            historyService.record(task, changes.toString().trim());
+        } else {
+            throw new IllegalArgumentException("No valid updates provided.");
+        }
+    }
+
     public int getTaskCount() {
         return taskService.getAllTasks().size();
     }

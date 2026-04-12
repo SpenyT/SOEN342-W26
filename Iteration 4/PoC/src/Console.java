@@ -1,8 +1,8 @@
-import collaborator.Collaborator;
-import history.HistoryLog;
-
 import java.util.List;
 import java.util.Scanner;
+
+import collaborator.Collaborator;
+import history.HistoryLog;
 import task.SubTask;
 import task.Task;
 
@@ -26,11 +26,12 @@ public class Console {
                 case "4": viewHistory();             break;
                 case "5": exportToCalendar();        break;
                 case "6": listOverloadedCollaborators(); break;
-                case "7":
+                case "7": updateTask();              break;
+                case "8":
                     System.out.println("Goodbye!");
                     return;
                 default:
-                    System.out.println("Invalid choice. Please enter 1-7.");
+                    System.out.println("Invalid choice. Please enter 1-8.");
             }
         }
     }
@@ -46,7 +47,8 @@ public class Console {
         System.out.println("|| 4. View Task History                   ||");
         System.out.println("|| 5. Export Tasks to iCalendar (.ics)    ||");
         System.out.println("|| 6. List Overloaded Collaborators       ||");
-        System.out.println("|| 7. Exit                                ||");
+        System.out.println("|| 7. Update Task                         ||");
+        System.out.println("|| 8. Exit                                ||");
         System.out.println("||========================================||");
         System.out.print(  "  Choice: ");
     }
@@ -188,6 +190,41 @@ public class Console {
             }
         }
         System.out.println("----------------------------------------------------------");
+    }
+
+    private void updateTask() {
+        System.out.println();
+        System.out.println("--- Update Task ---");
+        System.out.print("Task name (exact): ");
+        String taskName = scanner.nextLine().trim();
+
+        if (taskName.isEmpty()) {
+            System.out.println("Task name is required.");
+            return;
+        }
+
+        System.out.println("Leave fields blank to keep current values.");
+        System.out.print("New title: ");
+        String newTitle = scanner.nextLine().trim();
+        System.out.print("New description: ");
+        String description = scanner.nextLine().trim();
+        System.out.print("New status (OPEN/COMPLETED/CANCELLED): ");
+        String status = scanner.nextLine().trim();
+        System.out.print("New priority (DEFAULT/LOW/MEDIUM/HIGH/CRITICAL): ");
+        String priority = scanner.nextLine().trim();
+        System.out.print("New due date (yyyy-MM-dd): ");
+        String newDueDate = scanner.nextLine().trim();
+        System.out.print("New project name: ");
+        String newProject = scanner.nextLine().trim();
+        System.out.print("New tags (comma-separated): ");
+        String newTags = scanner.nextLine().trim();
+
+        try {
+            controller.updateTask(taskName, newTitle, description, status, priority, newDueDate, newProject, newTags);
+            System.out.println("Task updated successfully.");
+        } catch (Exception e) {
+            System.out.println("Update failed: " + e.getMessage());
+        }
     }
 
     private void printResults(List<Task> tasks) {
