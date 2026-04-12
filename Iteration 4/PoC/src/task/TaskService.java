@@ -351,6 +351,13 @@ public class TaskService {
                 .findFirst().orElse(null);
     }
 
+    public Task findTaskByName(String title) {
+        return tasks.stream()
+                .filter(t -> t.getTitle().equals(title))
+                .findFirst().orElse(null);
+    }
+
+
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasks);
     }
@@ -361,5 +368,46 @@ public class TaskService {
 
     private static String key(String title, LocalDate date) {
         return title + "|" + date.toString();
+    }
+
+    public void deleteTaskWithOldKey(String title, LocalDate dueDate) {
+        try {
+            // Delete subtasks
+            String sql1 = "DELETE FROM subtasks WHERE task_title = ? AND task_due_date = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql1)) {
+                ps.setString(1, title);
+                ps.setString(2, dueDate.toString());
+                ps.executeUpdate();
+            }
+
+            // Delete tags
+            String sql2 = "DELETE FROM task_tags WHERE task_title = ? AND task_due_date = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql2)) {
+                ps.setString(1, title);
+                ps.setString(2, dueDate.toString());
+                ps.executeUpdate();
+            }
+
+            // Delete task
+            String sql3 = "DELETE FROM tasks WHERE title = ? AND due_date = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql3)) {
+                ps.setString(1, title);
+                ps.setString(2, dueDate.toString());
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete task '" + title + "': " + e.getMessage(), e);
+        }
+    }
+
+    public void deleteTagsForTask(String title, LocalDate dueDate) {
+        String sql = "DELETE FROM task_tags WHERE task_title = ? AND task_due_date = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, title);
+            ps.setString(2, dueDate.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete tags for task '" + title + "': " + e.getMessage(), e);
+        }
     }
 }
