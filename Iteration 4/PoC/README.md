@@ -1,4 +1,4 @@
-# Task Scheduler App — SOEN 342 Iteration III
+# Task Scheduler App — SOEN 342 Iteration IV
 
 A Java console application for managing tasks, subtasks, projects, and collaborators. Supports CSV import/export, task search with multiple filters, history logging, iCalendar export, and collaborator capacity tracking.
 
