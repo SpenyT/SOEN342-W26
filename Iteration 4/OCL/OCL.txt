@@ -1,0 +1,17 @@
+Object Constraint Language (OCL)
+
+1.	A task cannot have more than 20 sub-tasks.
+context Task
+inv: self.subtask → size() <= 20
+
+2.	The number of open tasks without a due date should not exceed 50.
+context TaskService
+inv: self.task → select(t | t.status = Status::open and t.dueDate.oclIsUndefined()) → size() <= 50
+
+3.	The limit for open tasks for each collaborator category is a positive integer.” (i.e. Senior collaborators are limited to 2 open tasks.)
+context CollaboratorCat
+inv: self.openTaskLimit > 0
+
+4.	No collaborator must be overloaded”. (The number of assigned tasks that are open should not exceed the limit.)
+context Collaborator
+inv: self.openAssignedTaskCount<= self.CollaboratorCat.openTaskLimit
