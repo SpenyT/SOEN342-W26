@@ -33,11 +33,11 @@ public class ApplicationControler {
     private final CalendarExportGateway calendarGateway;
 
     public ApplicationControler() {
-        this.projects            = new Projects();
+        this.projects = new Projects();
         this.collaboratorService = new CollaboratorService(projects);
-        this.taskService         = new TaskService(projects);
-        this.historyService      = new HistoryService();
-        this.calendarGateway     = new ICalCalendarGateway();
+        this.taskService = new TaskService(projects);
+        this.historyService = new HistoryService();
+        this.calendarGateway = new ICalCalendarGateway();
     }
 
     public void exportToCalendar(String taskTitle, String dueDateStr, String filePath) throws IOException {
@@ -86,7 +86,9 @@ public class ApplicationControler {
     }
 
     public List<HistoryLog> getTaskHistory(String taskTitle, String dueDateStr) {
-        return historyService.getHistory(taskTitle, dueDateStr);
+        Task task = taskService.findTaskByNameAndDate(taskTitle, LocalDate.parse(dueDateStr));
+        if (task == null) throw new IllegalArgumentException("Task not found: " + taskTitle + " / " + dueDateStr);
+        return historyService.getHistory(task);
     }
 
     public void importFromCSV(String filePath) throws IOException {
@@ -107,7 +109,7 @@ public class ApplicationControler {
                 String projectDesc = get(fields, 7);
                 String collaboratorName = get(fields, 8);
                 String collaboratorCat = get(fields, 9);
-                String tagsStr         = get(fields, 10);
+                String tagsStr = get(fields, 10);
 
                 if (taskName.isEmpty() || dueDateStr.isEmpty()) continue;
 
@@ -230,7 +232,6 @@ public class ApplicationControler {
     public void updateTask(String taskTitle, String dueDateStr, String newTitle, String newDescription, String newStatusStr, String newPriorityStr, String newDueDateStr, String newProjectName, String newTagsStr, RecurrencePattern recurrencePattern) {
         Task task;
         
-        // If due date is provided, search by name and date; otherwise search by name only
         if (dueDateStr != null && !dueDateStr.trim().isEmpty()) {
             try {
                 LocalDate dueDate = LocalDate.parse(dueDateStr.trim());
@@ -255,7 +256,6 @@ public class ApplicationControler {
         StringBuilder changes = new StringBuilder();
 
         if (newTitle != null && !newTitle.trim().isEmpty() && !newTitle.trim().equals(oldTitle)) {
-            // Check uniqueness
             if (taskService.getAllTasks().stream().anyMatch(t -> t.getTitle().equals(newTitle.trim()) && !t.equals(task))) {
                 throw new IllegalArgumentException("Task title already exists: " + newTitle);
             }
@@ -311,9 +311,7 @@ public class ApplicationControler {
         }
 
         if (tagsChanged) {
-            // Clear current tags
             task.getTags().clear();
-            // Add new tags
             for (String tagName : newTagsStr.split(",")) {
                 String trimmed = tagName.trim();
                 if (!trimmed.isEmpty()) {
@@ -334,15 +332,13 @@ public class ApplicationControler {
 
         if (changes.length() > 0) {
             if (titleChanged || dueDateChanged) {
-                // Delete old database records
                 taskService.deleteTaskWithOldKey(oldTitle, oldDueDate);
             }
             if (tagsChanged) {
-                // Delete old tags
                 taskService.deleteTagsForTask(oldTitle, oldDueDate);
             }
             taskService.saveTask(task);
-            // Save subtasks and tags with new keys
+
             for (SubTask st : task.getSubTasks()) {
                 taskService.saveSubTask(st, task);
             }
@@ -374,9 +370,8 @@ public class ApplicationControler {
             throw new IllegalArgumentException("Recurrence pattern is required for this method.");
         }
         Project project = projects.findOrCreateProject(projectName, "");
-        Task task = taskService.createTask(title, dueDate, description, project);
+        Task task = taskService.createRecurringTask(title, description, project, recurrencePattern);
         task.setPriorityLevel(priority);
-        task.setRecurrencePattern(recurrencePattern);
         taskService.saveTask(task);
         historyService.record(task, "Task created with recurrence pattern (" + recurrencePattern.getType() + ", interval: " + recurrencePattern.getInterval() + ").");
     }

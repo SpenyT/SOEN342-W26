@@ -4,7 +4,8 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import task.Task;
+
+import task.WorkItem;
 
 public class HistoryService {
     private static final String DB_URL = "jdbc:sqlite:data/history.db";
@@ -24,52 +25,48 @@ public class HistoryService {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(
                 "CREATE TABLE IF NOT EXISTS history_logs (" +
-                "  id            INTEGER PRIMARY KEY AUTOINCREMENT," +
-                "  task_title    TEXT    NOT NULL," +
-                "  task_due_date TEXT    NOT NULL," +
-                "  timestamp     TEXT    NOT NULL," +
-                "  description   TEXT    NOT NULL" +
+                "  id          INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "  workitem_id TEXT    NOT NULL," +
+                "  timestamp   TEXT    NOT NULL," +
+                "  description TEXT    NOT NULL" +
                 ")"
             );
         }
     }
 
-    public void record(Task task, String description) {
-        record(task.getTitle(), task.getDueDate().toString(), description);
+    public void record(WorkItem item, String description) {
+        record(item.getId(), description);
     }
 
-    public void record(String taskTitle, String taskDueDate, String description) {
-        String sql = "INSERT INTO history_logs(task_title, task_due_date, timestamp, description) VALUES(?,?,?,?)";
+    public void record(String workitemId, String description) {
+        String sql = "INSERT INTO history_logs(workitem_id, timestamp, description) VALUES(?,?,?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, taskTitle);
-            ps.setString(2, taskDueDate);
-            ps.setString(3, LocalDateTime.now().toString());
-            ps.setString(4, description);
+            ps.setString(1, workitemId);
+            ps.setString(2, LocalDateTime.now().toString());
+            ps.setString(3, description);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to record history entry: " + e.getMessage(), e);
         }
     }
 
-    public List<HistoryLog> getHistory(Task task) {
-        return getHistory(task.getTitle(), task.getDueDate().toString());
+    public List<HistoryLog> getHistory(WorkItem item) {
+        return getHistory(item.getId());
     }
 
-    public List<HistoryLog> getHistory(String taskTitle, String taskDueDate) {
+    public List<HistoryLog> getHistory(String workitemId) {
         String sql =
-            "SELECT task_title, task_due_date, timestamp, description" +
+            "SELECT workitem_id, timestamp, description" +
             " FROM history_logs" +
-            " WHERE task_title = ? AND task_due_date = ?" +
+            " WHERE workitem_id = ?" +
             " ORDER BY id ASC";
         List<HistoryLog> logs = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, taskTitle);
-            ps.setString(2, taskDueDate);
+            ps.setString(1, workitemId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     logs.add(new HistoryLog(
-                        rs.getString("task_title"),
-                        rs.getString("task_due_date"),
+                        rs.getString("workitem_id"),
                         LocalDateTime.parse(rs.getString("timestamp")),
                         rs.getString("description")
                     ));

@@ -20,6 +20,21 @@ public class Task extends WorkItem {
     private final List<Tag> tags;
     private Project project;
 
+    public Task(String title, LocalDate dueDate, String description, Project project, String id) {
+        super(title, id);
+        this.dueDate = dueDate;
+        this.description = description;
+        this.project  = project;
+        this.creationDate = LocalDate.now();
+        this.isRecurring = false;
+        this.priorityLevel = PriorityLevel.DEFAULT;
+        this.recurrencePattern = null;
+        this.parentTask  = null;
+        this.occurrences = new ArrayList<>();
+        this.subTasks = new ArrayList<>();
+        this.tags = new ArrayList<>();
+    }
+
     public Task(String title, LocalDate dueDate, String description, Project project) {
         super(title);
         this.dueDate = dueDate;
@@ -41,6 +56,7 @@ public class Task extends WorkItem {
         if (subTasks.size() >= 20) {
             throw new IllegalStateException("A task cannot have more than 20 sub-tasks.");
         }
+        subTask.setParentTask(this);
         subTasks.add(subTask);
     }
     public void removeSubTask(SubTask subTask) { subTasks.remove(subTask); }

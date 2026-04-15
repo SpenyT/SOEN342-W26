@@ -30,9 +30,9 @@ public class Collaborator {
         nOpenTasks++;
     }
 
-    public void restoreAssignment(SubTask subTask) {
+    public void restoreAssignment(SubTask subTask, boolean parentTaskIsOpen) {
         assignedSubTasks.add(subTask);
-        if (subTask.getStatus() == Status.OPEN) nOpenTasks++;
+        if (parentTaskIsOpen && subTask.getStatus() == Status.OPEN) nOpenTasks++;
     }
 
     public void releaseSubTask(SubTask subTask) {

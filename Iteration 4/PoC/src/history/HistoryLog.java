@@ -3,22 +3,19 @@ package history;
 import java.time.LocalDateTime;
 
 public class HistoryLog {
-    private final String taskTitle;
-    private final String taskDueDate;
+    private final String workitemId;
     private final LocalDateTime timestamp;
     private final String description;
 
-    public HistoryLog(String taskTitle, String taskDueDate, LocalDateTime timestamp, String description) {
-        this.taskTitle = taskTitle;
-        this.taskDueDate = taskDueDate;
+    public HistoryLog(String workitemId, LocalDateTime timestamp, String description) {
+        this.workitemId = workitemId;
         this.timestamp = timestamp;
         this.description = description;
     }
 
-    public String getTaskTitle()   { return taskTitle; }
-    public String getTaskDueDate() { return taskDueDate; }
+    public String getWorkitemId()       { return workitemId; }
     public LocalDateTime getTimestamp() { return timestamp; }
-    public String getDescription() { return description; }
+    public String getDescription()      { return description; }
 
     @Override
     public String toString() {

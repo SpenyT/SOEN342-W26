@@ -43,6 +43,7 @@ public class TaskService {
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(
                 "CREATE TABLE IF NOT EXISTS tasks (" +
+                "  id                  TEXT    NOT NULL," +
                 "  title               TEXT    NOT NULL," +
                 "  due_date            TEXT    NOT NULL," +
                 "  description         TEXT    NOT NULL DEFAULT ''," +
@@ -63,6 +64,7 @@ public class TaskService {
             );
             stmt.executeUpdate(
                 "CREATE TABLE IF NOT EXISTS subtasks (" +
+                "  id                   TEXT NOT NULL," +
                 "  task_title           TEXT NOT NULL," +
                 "  task_due_date        TEXT NOT NULL," +
                 "  title                TEXT NOT NULL," +
@@ -96,13 +98,14 @@ public class TaskService {
     private Map<String, Task> loadTasks(Projects projects) throws SQLException {
         Map<String, Task> taskMap = new LinkedHashMap<>();
         String sql =
-            "SELECT title, due_date, description, status, priority," +
+            "SELECT id, title, due_date, description, status, priority," +
             "       is_recurring, project_name," +
             "       recurrence_type, recurrence_interval, recurrence_end," +
             "       recurrence_days, recurrence_dom" +
             " FROM tasks";
         try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
+                String id    = rs.getString("id");
                 String title = rs.getString("title");
                 LocalDate dueDate = LocalDate.parse(rs.getString("due_date"));
                 String desc = rs.getString("description");
@@ -110,7 +113,7 @@ public class TaskService {
                 Project proj = projects.findProject(projName);
                 if (proj == null) continue;
 
-                Task task = new Task(title, dueDate, desc, proj);
+                Task task = new Task(title, dueDate, desc, proj, id);
                 try { task.setStatus(Status.valueOf(rs.getString("status"))); }
                 catch (IllegalArgumentException ignored) {}
                 try { task.setPriorityLevel(PriorityLevel.valueOf(rs.getString("priority"))); }
@@ -155,14 +158,14 @@ public class TaskService {
 
     private void loadSubTasks(Map<String, Task> taskMap, Projects projects) throws SQLException {
         String sql =
-            "SELECT task_title, task_due_date, title, status, collaborator_project, collaborator_name" +
+            "SELECT id, task_title, task_due_date, title, status, collaborator_project, collaborator_name" +
             " FROM subtasks";
         try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 Task parentTask = taskMap.get(key(rs.getString("task_title"), LocalDate.parse(rs.getString("task_due_date"))));
                 if (parentTask == null) continue;
 
-                SubTask st = new SubTask(rs.getString("title"));
+                SubTask st = new SubTask(rs.getString("title"), rs.getString("id"));
                 try { st.setStatus(Status.valueOf(rs.getString("status"))); }
                 catch (IllegalArgumentException ignored) {}
 
@@ -174,7 +177,7 @@ public class TaskService {
                         Collaborator collab = proj.findCollaboratorByName(collabName);
                         if (collab != null) {
                             st.setAssignedCollaborator(collab);
-                            collab.restoreAssignment(st);
+                            collab.restoreAssignment(st, parentTask.getStatus() == Status.OPEN);
                         }
                     }
                 }
@@ -194,9 +197,9 @@ public class TaskService {
     }
 
     public Task createTask(String title, LocalDate dueDate, String description, Project project) {
-        boolean exists = tasks.stream().anyMatch(t -> t.getTitle().equals(title));
+        boolean exists = tasks.stream().anyMatch(t -> t.getTitle().equals(title) && t.getDueDate().equals(dueDate));
         if (exists) {
-            throw new IllegalArgumentException("Task name already exists.");
+            throw new IllegalArgumentException("Task name + due date already exists.");
         }
         Task t = new Task(title, dueDate, description, project);
         tasks.add(t);
@@ -224,40 +227,41 @@ public class TaskService {
     public void saveTask(Task task) {
         String sql =
             "INSERT OR REPLACE INTO tasks(" +
-            "  title, due_date, description, status, priority, creation_date," +
+            "  id, title, due_date, description, status, priority, creation_date," +
             "  is_recurring, project_name, parent_title, parent_due_date," +
             "  recurrence_type, recurrence_interval, recurrence_end, recurrence_days, recurrence_dom" +
-            ") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            ") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             RecurrencePattern rp = task.getRecurrencePattern();
-            ps.setString(1,  task.getTitle());
-            ps.setString(2,  task.getDueDate().toString());
-            ps.setString(3,  task.getDescription() != null ? task.getDescription() : "");
-            ps.setString(4,  task.getStatus().name());
-            ps.setString(5,  task.getPriorityLevel().name());
-            ps.setString(6,  task.getCreationDate().toString());
-            ps.setInt(7,     task.isRecurring() ? 1 : 0);
-            ps.setString(8,  task.getProject().getName());
+            ps.setString(1,  task.getId());
+            ps.setString(2,  task.getTitle());
+            ps.setString(3,  task.getDueDate().toString());
+            ps.setString(4,  task.getDescription() != null ? task.getDescription() : "");
+            ps.setString(5,  task.getStatus().name());
+            ps.setString(6,  task.getPriorityLevel().name());
+            ps.setString(7,  task.getCreationDate().toString());
+            ps.setInt(8,     task.isRecurring() ? 1 : 0);
+            ps.setString(9,  task.getProject().getName());
             if (task.getParentTask() != null) {
-                ps.setString(9,  task.getParentTask().getTitle());
-                ps.setString(10, task.getParentTask().getDueDate().toString());
+                ps.setString(10, task.getParentTask().getTitle());
+                ps.setString(11, task.getParentTask().getDueDate().toString());
             } else {
-                ps.setNull(9,  Types.VARCHAR);
                 ps.setNull(10, Types.VARCHAR);
+                ps.setNull(11, Types.VARCHAR);
             }
             if (rp != null) {
-                ps.setString(11, rp.getType().name());
-                ps.setInt(12,    rp.getInterval());
-                ps.setString(13, rp.getEndDate().toString());
+                ps.setString(12, rp.getType().name());
+                ps.setInt(13,    rp.getInterval());
+                ps.setString(14, rp.getEndDate().toString());
                 String days = rp.getSelectedDays().stream().map(DayOfWeek::name).collect(Collectors.joining(","));
-                ps.setString(14, days);
-                ps.setInt(15,    rp.getDayOfMonth());
+                ps.setString(15, days);
+                ps.setInt(16,    rp.getDayOfMonth());
             } else {
-                ps.setNull(11, Types.VARCHAR);
-                ps.setNull(12, Types.INTEGER);
-                ps.setNull(13, Types.VARCHAR);
+                ps.setNull(12, Types.VARCHAR);
+                ps.setNull(13, Types.INTEGER);
                 ps.setNull(14, Types.VARCHAR);
-                ps.setNull(15, Types.INTEGER);
+                ps.setNull(15, Types.VARCHAR);
+                ps.setNull(16, Types.INTEGER);
             }
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -268,20 +272,21 @@ public class TaskService {
     public void saveSubTask(SubTask subTask, Task parentTask) {
         String sql =
             "INSERT OR REPLACE INTO subtasks(" +
-            "  task_title, task_due_date, title, status, collaborator_project, collaborator_name" +
-            ") VALUES(?,?,?,?,?,?)";
+            "  id, task_title, task_due_date, title, status, collaborator_project, collaborator_name" +
+            ") VALUES(?,?,?,?,?,?,?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, parentTask.getTitle());
-            ps.setString(2, parentTask.getDueDate().toString());
-            ps.setString(3, subTask.getTitle());
-            ps.setString(4, subTask.getStatus().name());
+            ps.setString(1, subTask.getId());
+            ps.setString(2, parentTask.getTitle());
+            ps.setString(3, parentTask.getDueDate().toString());
+            ps.setString(4, subTask.getTitle());
+            ps.setString(5, subTask.getStatus().name());
             Collaborator collab = subTask.getAssignedCollaborator();
             if (collab != null) {
-                ps.setString(5, parentTask.getProject().getName());
-                ps.setString(6, collab.getName());
+                ps.setString(6, parentTask.getProject().getName());
+                ps.setString(7, collab.getName());
             } else {
-                ps.setNull(5, Types.VARCHAR);
                 ps.setNull(6, Types.VARCHAR);
+                ps.setNull(7, Types.VARCHAR);
             }
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -315,8 +320,6 @@ public class TaskService {
                 Status s = Status.valueOf(statusStr.toUpperCase());
                 result = result.stream().filter(t -> t.getStatus() == s).collect(Collectors.toList());
             } catch (Exception ignored) {}
-        } else {
-            result = result.stream().filter(t -> t.getStatus() == Status.OPEN).collect(Collectors.toList());
         }
         if (!isBlank(startDateStr)) {
             try {
@@ -371,23 +374,18 @@ public class TaskService {
 
     public void deleteTaskWithOldKey(String title, LocalDate dueDate) {
         try {
-            // Delete subtasks
             String sql1 = "DELETE FROM subtasks WHERE task_title = ? AND task_due_date = ?";
             try (PreparedStatement ps = conn.prepareStatement(sql1)) {
                 ps.setString(1, title);
                 ps.setString(2, dueDate.toString());
                 ps.executeUpdate();
             }
-
-            // Delete tags
             String sql2 = "DELETE FROM task_tags WHERE task_title = ? AND task_due_date = ?";
             try (PreparedStatement ps = conn.prepareStatement(sql2)) {
                 ps.setString(1, title);
                 ps.setString(2, dueDate.toString());
                 ps.executeUpdate();
             }
-
-            // Delete task
             String sql3 = "DELETE FROM tasks WHERE title = ? AND due_date = ?";
             try (PreparedStatement ps = conn.prepareStatement(sql3)) {
                 ps.setString(1, title);
@@ -400,7 +398,8 @@ public class TaskService {
     }
 
     public void deleteTagsForTask(String title, LocalDate dueDate) {
-        String sql = "DELETE FROM task_tags WHERE task_title = ? AND task_due_date = ?";
+        String sql = "DELETE FROM task_tags"
+                   + " WHERE task_title = ? AND task_due_date = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, title);
             ps.setString(2, dueDate.toString());
