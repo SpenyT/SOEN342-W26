@@ -4,15 +4,6 @@ A Java console application for managing tasks, subtasks, projects, and collabora
 
 ---
 
-## Team Members
-| Name      | Student ID |  Github Username |
-| ----------- | ----------- | ----------- |
-| Spencer Toupin | 40259693 | SpenyT |
-| Davann Hang | 24790383 | davanndbg |
-| Liam Handfield | 40300383 | Doula123 |
-
----
-
 ## Requirements
 
 - Java 21+
@@ -25,14 +16,6 @@ Maven handles all the dependencies, they download automatically when you build.
 ## Build & Run
 
 All commands are run from the **root of the project** (the `PoC/` folder).
-You should see something like:
-```
-# on windows
-...\SOEN342-W26\PoC>
-
-# or if you're on linux
-...\SOEN342-W26\Iteration 4\PoC$
-```
 
 ### Compile
 
@@ -62,11 +45,13 @@ mvn compile exec:java
 ||========================================||
 || 1. Import Tasks from CSV               ||
 || 2. Export Tasks to CSV                 ||
-|| 3. Search Tasks                        ||
-|| 4. View Task History                   ||
-|| 5. Export Tasks to iCalendar (.ics)    ||
-|| 6. List Overloaded Collaborators       ||
-|| 7. Exit                                ||
+|| 3. Create Task                         ||
+|| 4. Update Task                         ||
+|| 5. Search Tasks                        ||
+|| 6. View Task History                   ||
+|| 7. Export Tasks to iCalendar (.ics)    ||
+|| 8. List Overloaded Collaborators       ||
+|| 9. Exit                                ||
 ||========================================||
 ```
 
@@ -129,10 +114,34 @@ Saves all tasks to a CSV file in the same format as import (including tags).
 ```
 Export file path: data/export.csv
 ```
+---
+
+### Option 3 — Create Tasks
+
+Create task by providing a title. Description, due date, project name and recurrence pattern are optional. Press enter to skip if field not mandatory. 
+When a task is created it also contains a creation date, a priority level, and a status.
+
+```
+--- Create Task ---
+Task title (required)
+Description (optional)
+Due Date (optional)
+Priority Level (default: Default)
+Status (default: OPEN)
+Project Name (optional)
+Recurrence Patter (optional)
+```
 
 ---
 
-### Option 3 — Search Tasks
+### Option 4 — Update Tasks
+
+To update task enter new data. Press enter to skip.
+Changes can be made to title, description, priority, due date, status, associated project, tags or recurrence pattern.
+
+---
+
+### Option 5 — Search Tasks
 
 Filters tasks by any combination of criteria. All fields are optional — press Enter to skip.
 
@@ -151,7 +160,7 @@ Tag:
 
 ---
 
-### Option 4 — View Task History
+### Option 6 — View Task History
 
 Shows the recorded history for a specific task.
 
@@ -162,7 +171,7 @@ Due date (yyyy-MM-dd): 2026-04-10
 
 ---
 
-### Option 5 — Export Tasks to iCalendar (.ics)
+### Option 7 — Export Tasks to iCalendar (.ics)
 
 Exports tasks to a `.ics` file compatible with Google Calendar, Outlook, and Apple Calendar.
 
@@ -176,7 +185,7 @@ Enter an output file path without the `.ics` extension — it is added automatic
 
 ---
 
-### Option 6 — List Overloaded Collaborators
+### Option 8 — List Overloaded Collaborators
 
 Lists collaborators who are at or over their open-task capacity:
 
@@ -188,7 +197,7 @@ Lists collaborators who are at or over their open-task capacity:
 
 ---
 
-### Option 7 — Exit
+### Option 9 — Exit
 
 All data is persisted in `data/` and reloaded automatically on the next startup.
 
