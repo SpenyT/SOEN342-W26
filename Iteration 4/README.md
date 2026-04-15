@@ -15,7 +15,7 @@ Maven handles all the dependencies, they download automatically when you build.
 
 ## Build & Run
 
-All commands are run from the **root of the project** (the `PoC/` folder).
+All commands are run from the **root of the Proof of Concept** (the `PoC/` folder).
 
 ### Compile
 
