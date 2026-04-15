@@ -85,7 +85,7 @@ public class Console {
         System.out.println();
         System.out.println("--- Task Search ---");
         System.out.println("Leave blank to skip a criterion.");
-        System.out.println("(No criteria = all OPEN tasks, sorted by due date)");
+        System.out.println("(No criteria = all tasks regardless of status, sorted by due date)");
         System.out.println();
 
         System.out.print("Task name contains: ");
@@ -428,12 +428,21 @@ public class Console {
         System.out.println("----------------------------------------------------------------------");
 
         for (Task t : tasks) {
+            String recurringLabel = "";
+            if (t.isOccurrence()) {
+                recurringLabel = " [occurrence of '" + t.getParentTask().getTitle() + "' " + t.getParentTask().getDueDate() + "]";
+            } else if (t.isRecurring()) {
+                recurringLabel = " [recurring - " + t.getOccurrences().size() + " occurrence(s)]";
+            }
             System.out.printf(fmt,
                     t.getTitle(),
                     t.getDueDate(),
                     t.getStatus(),
                     t.getPriorityLevel(),
                     t.getProject().getName());
+            if (!recurringLabel.isEmpty()) {
+                System.out.println("  " + recurringLabel.trim());
+            }
 
             if (!t.getTags().isEmpty()) {
                 System.out.printf("  Tags: %s%n", t.getTags());
