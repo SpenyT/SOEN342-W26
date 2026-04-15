@@ -1,4 +1,8 @@
-# SOEN342-W26
+# Task Scheduler App — SOEN 342 Iteration IV
+
+A Java console application for managing tasks, subtasks, projects, and collaborators. Supports CSV import/export, task search with multiple filters, history logging, iCalendar export, and collaborator capacity tracking.
+
+---
 
 ## Team Members
 | Name      | Student ID |  Github Username |
@@ -6,13 +10,6 @@
 | Spencer Toupin | 40259693 | SpenyT |
 | Davann Hang | 24790383 | davanndbg |
 | Liam Handfield | 40300383 | Doula123 |
-
-
----
-
-# Task Scheduler App — SOEN 342 Iteration IV
-
-A Java console application for managing tasks, subtasks, projects, and collaborators. Supports CSV import/export, task search with multiple filters, history logging, iCalendar export, and collaborator capacity tracking.
 
 ---
 
@@ -28,6 +25,14 @@ Maven handles all the dependencies, they download automatically when you build.
 ## Build & Run
 
 All commands are run from the **root of the project** (the `PoC/` folder).
+You should see something like:
+```
+# on windows
+...\SOEN342-W26\PoC>
+
+# or if you're on linux
+...\SOEN342-W26\Iteration 4\PoC$
+```
 
 ### Compile
 
