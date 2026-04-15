@@ -136,7 +136,7 @@ Recurrence Patter (optional)
 
 ### Option 4 — Update Tasks
 
-To update task enter new data. Press enter to skip.
+To update task enter new value. Press enter to skip.
 Changes can be made to title, description, priority, due date, status, associated project, tags or recurrence pattern.
 
 ---
