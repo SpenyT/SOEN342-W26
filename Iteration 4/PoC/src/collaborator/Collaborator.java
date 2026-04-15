@@ -2,6 +2,7 @@ package collaborator;
 
 import java.util.ArrayList;
 
+import task.Status;
 import task.SubTask;
 
 public class Collaborator {
@@ -31,7 +32,11 @@ public class Collaborator {
 
     public void restoreAssignment(SubTask subTask) {
         assignedSubTasks.add(subTask);
-        nOpenTasks++;
+        if (subTask.getStatus() == Status.OPEN) nOpenTasks++;
+    }
+
+    public void releaseSubTask(SubTask subTask) {
+        if (nOpenTasks > 0) nOpenTasks--;
     }
 
     public String getName() { return name; }

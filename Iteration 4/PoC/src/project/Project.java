@@ -6,6 +6,7 @@ import java.util.List;
 import collaborator.Collaborator;
 import collaborator.CollaboratorCat;
 import tag.Tag;
+import task.Status;
 import task.SubTask;
 import task.Task;
 
@@ -46,7 +47,7 @@ public class Project {
     }
 
     public SubTask assignCollaboratorToTask(Collaborator collaborator, Task t, String subtaskName) {
-        if (collaborator.isAtCapacity()) {
+        if (t.getStatus() == Status.OPEN && collaborator.isAtCapacity()) {
             throw new IllegalStateException(
                 "Collaborator '" + collaborator.getName() + "' is at capacity ("
                 + collaborator.getNOpenTasks() + "/" + collaborator.getMaxTasks() + ")."
@@ -55,6 +56,9 @@ public class Project {
         SubTask subTask = new SubTask(subtaskName);
         t.addSubTask(subTask);
         subTask.assignCollaborator(collaborator);
+        if (t.getStatus() != Status.OPEN) {
+            collaborator.releaseSubTask(subTask);
+        }
         return subTask;
     }
 
